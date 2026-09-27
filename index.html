@@ -30,8 +30,8 @@
     <label>Pickup or delivery preference<select name="fulfillment"><option>Pickup</option><option>Delivery</option><option>Not sure yet</option></select></label>
     <label>Additional notes<textarea name="notes"></textarea></label>
     <button class="submit" type="submit">Submit order request</button>
-    <p class="fine">Submitting an order request does not include payment. Pricing and next steps will be confirmed directly.</p>
-    <p id="success" class="success" hidden>Thank you! Your request is ready. Order delivery/email connection is the next setup step.</p>
+    <p class="fine">Your order request will be securely recorded. Final customization and payment will be confirmed before production.</p>
+    <p id="success" class="success" hidden>Submitting your order…</p>
   </form>
 </div></section>
 
@@ -46,16 +46,5 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="site-config.js"></script>
 <script src="products.js"></script>
-<script>
-(async()=>{
- try{
-  const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
-  const {data,error}=await db.from('products').select('*').eq('available',true).order('sort_order');
-  if(!error && data?.length){
-   window.PRODUCTS=data.map(p=>({id:p.id,name:p.name,eyebrow:p.eyebrow,description:p.description,price:Number(p.price),priceLabel:p.price_label,image:p.image}));
-   window.dispatchEvent(new Event('sez-products-loaded'));
-  }
- }catch(e){ console.warn('Using local product fallback'); }
-})();
-</script><script src="app.js"></script>
+<script src="app.js"></script>
 </body></html>

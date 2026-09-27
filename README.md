@@ -1,11 +1,15 @@
-# ShonellesEZevents Live Admin Build
-This version connects the storefront and Admin page to Supabase.
+# ShonellesEZevents Orders v1
 
-- admin.html: real Supabase email/password login
-- Products load from Supabase
-- Admin can edit product name, price, price label, description and availability
-- Public storefront uses only available products
-- Secret/service-role keys are not included
+This build adds real Supabase order intake and Admin order management.
 
-Upload the CONTENTS of this folder to the existing GitHub repository root and commit.
-Then visit /admin.html on the deployed site and sign in with the Supabase Authentication user you created.
+Before uploading:
+1. In Supabase SQL Editor, run `SUPABASE-ORDERS-SETUP.sql`.
+2. Then upload the contents of this folder to the existing GitHub repository and commit.
+3. Test one storefront order.
+4. Sign into `/admin.html` and confirm the order appears.
+
+Payment and email are intentionally not faked. The next activation requires:
+- PayPal Business checkout client credentials/configuration for cards, Apple Pay, Google Pay, PayPal and Venmo.
+- A transactional email service/server function for merchant and customer confirmations.
+
+No card data or secret API keys belong in GitHub or Supabase browser code.

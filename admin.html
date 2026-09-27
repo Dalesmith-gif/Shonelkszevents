@@ -22,7 +22,7 @@ button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{back
 <section id="dashboard" hidden>
 <div class="panel"><strong id="who"></strong> <button class="secondary" id="signout">Sign out</button></div>
 <div class="panel"><h2>Products</h2><div id="rows"></div><p><button class="primary" id="save">Save all changes</button></p><p class="status" id="saveStatus"></p></div>
-<div class="panel"><h2>Orders</h2><p>Order management will activate when checkout is connected. Workflow: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed.</p></div>
+<div class="panel"><h2>Orders</h2><button class="secondary" id="refreshOrders">Refresh orders</button><div id="orders"></div></div>
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,12 +34,13 @@ rows=document.getElementById('rows'), saveStatus=document.getElementById('saveSt
 email=document.getElementById('email'), password=document.getElementById('password'),
 signin=document.getElementById('signin'), signout=document.getElementById('signout'),
 save=document.getElementById('save'), loginmsg=document.getElementById('loginmsg'),
-who=document.getElementById('who');
+who=document.getElementById('who'), orders=document.getElementById('orders'),
+refreshOrders=document.getElementById('refreshOrders');
 let items=[];
 async function sessionUI(){
  const {data:{session}}=await db.auth.getSession();
  login.hidden=!!session; dashboard.hidden=!session;
- if(session){who.textContent="Signed in: "+session.user.email; await load();}
+ if(session){who.textContent="Signed in: "+session.user.email; await load(); await loadOrders();}
 }
 async function load(){
  saveStatus.textContent="Loading…";
@@ -62,5 +63,29 @@ rows.addEventListener('change',e=>{if(e.target.dataset.k==='available')items[e.t
 signin.onclick=async()=>{loginmsg.textContent="Signing in…";const {error}=await db.auth.signInWithPassword({email:email.value,password:password.value});loginmsg.textContent=error?error.message:"";if(!error)sessionUI()}
 signout.onclick=async()=>{await db.auth.signOut();sessionUI()}
 save.onclick=async()=>{saveStatus.textContent="Saving…";for(const p of items){const {error}=await db.from('products').update({name:p.name,price:p.price,price_label:p.price_label,description:p.description,available:p.available,updated_at:new Date().toISOString()}).eq('id',p.id);if(error){saveStatus.textContent="Error: "+error.message;return}}saveStatus.textContent="Saved successfully."}
+
+async function loadOrders(){
+ orders.innerHTML="<p>Loading orders…</p>";
+ const {data,error}=await db.from('orders').select('*,order_items(*)').order('created_at',{ascending:false});
+ if(error){orders.innerHTML="<p>"+error.message+"</p>";return}
+ if(!data.length){orders.innerHTML="<p>No orders yet.</p>";return}
+ orders.innerHTML=data.map(o=>`<div class="row">
+ <strong>${o.order_number}</strong> — ${new Date(o.created_at).toLocaleString()}<br>
+ ${o.customer_name} · ${o.contact}<br>
+ Items: ${(o.order_items||[]).map(i=>i.product_name).join(", ")}<br>
+ Estimated total: $${Number(o.estimated_total).toFixed(2)}<br>
+ Customization: ${o.customization||"—"}<br>
+ Fulfillment: ${o.fulfillment||"—"}<br>
+ <label>Status <select class="orderStatus" data-id="${o.id}">
+ ${['New','Awaiting Payment','Paid','In Production','Ready','Shipped/Completed','Cancelled'].map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}
+ </select></label>
+ </div>`).join("");
+ document.querySelectorAll(".orderStatus").forEach(el=>el.onchange=async()=>{
+   const {error}=await db.from('orders').update({status:el.value,updated_at:new Date().toISOString()}).eq('id',el.dataset.id);
+   if(error) alert(error.message);
+ });
+}
+refreshOrders.onclick=loadOrders;
+
 sessionUI();
 </script></body></html>
