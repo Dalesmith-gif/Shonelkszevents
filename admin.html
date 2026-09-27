@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ShonellesEZevents Admin</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.admin{max-width:1000px;margin:40px auto;padding:20px}.admin h1{font-family:Georgia,serif;color:#8b2759}
+.notice{background:#fff4b8;padding:14px 16px;border-radius:12px;margin:15px 0}
+.row{display:grid;grid-template-columns:1fr 120px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #ddd}
+.row input{padding:10px;border:1px solid #bbb;border-radius:8px;width:100%}
+button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}
+.save{background:#8b2759;color:white}.reset{background:#eee}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+</style></head>
+<body>
+<main class="admin">
+<h1>ShonellesEZevents Admin</h1>
+<div class="notice"><strong>Admin foundation:</strong> product editing is ready. Secure cloud login/database activation requires your Supabase project credentials; payment activation requires your PayPal Business checkout credentials. Never paste private secret keys into this page or GitHub.</div>
+<h2>Products</h2><div id="rows"></div>
+<p><button class="save" id="save">Save changes on this browser</button> <button class="reset" id="reset">Reset</button></p>
+<h2>Order workflow</h2>
+<p>Planned statuses: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed.</p>
+<h2>Payments</h2>
+<p>Final checkout is designed for credit/debit cards, Apple Pay, Google Pay, PayPal and Venmo through a hosted payment checkout. Sensitive card data is never stored in this site.</p>
+</main>
+<script src="products.js"></script>
+<script>
+const KEY='sez-admin-products';
+let items=JSON.parse(localStorage.getItem(KEY)||'null')||window.PRODUCTS;
+function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
+<input data-i="${i}" data-k="name" value="${p.name}">
+<input data-i="${i}" data-k="price" type="number" value="${p.price}">
+<input data-i="${i}" data-k="priceLabel" value="${p.priceLabel||''}">
+<input data-i="${i}" data-k="description" value="${p.description||''}">
+</div>`).join('')}
+rows.addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(k){items[i][k]=k==='price'?Number(e.target.value):e.target.value}})
+save.onclick=()=>{localStorage.setItem(KEY,JSON.stringify(items));alert('Saved on this browser. Supabase activation will make these changes live for all customers.')}
+reset.onclick=()=>{localStorage.removeItem(KEY);items=window.PRODUCTS;draw()}
+draw();
+</script></body></html>

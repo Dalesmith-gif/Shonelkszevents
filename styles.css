@@ -7,3 +7,7 @@
 .choose p{color:#8b2759;font-weight:700;line-height:1.35;margin:0}
 .hero .intro{max-width:530px}
 @media(min-width:901px){.hero{padding:54px 0}.hero-grid{grid-template-columns:.8fr 1.2fr}.hero .tilt img{height:350px}.shop{padding-top:60px}}
+
+/* Right-align the product-section order prompt */
+.choose { text-align: right; margin-left: auto; }
+.choose h3, .choose p { text-align: right; }
