@@ -1,47 +1,7 @@
-const cart = [];
-const grid = document.querySelector("#productGrid");
-const orderItems = document.querySelector("#orderItems");
-const selectedItems = document.querySelector("#selectedItems");
-const total = document.querySelector("#total");
-
-function money(n){ return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n); }
-
-function renderProducts(){
-  grid.innerHTML = window.PRODUCTS.map(p => `
-    <article class="product-card">
-      ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div class="product-photo">Add ${p.name} photo</div>`}
-      <h3>${p.name}</h3>
-      <p>${p.description}</p>
-      <strong>${p.priceLabel || money(p.price)}</strong>
-      <button class="btn add" data-id="${p.id}">Add to Order</button>
-    </article>`).join("");
-
-  document.querySelectorAll(".add").forEach(b => b.addEventListener("click", () => {
-    const p = window.PRODUCTS.find(x => x.id === b.dataset.id);
-    cart.push({...p, cartId: crypto.randomUUID()});
-    renderCart();
-    document.querySelector(".order").scrollIntoView({behavior:"smooth", block:"start"});
-  }));
-}
-
-function renderCart(){
-  if(!cart.length){
-    orderItems.innerHTML = `<p class="muted">Nothing selected yet.</p>`;
-    selectedItems.value = "";
-    total.textContent = "";
-    return;
-  }
-  orderItems.innerHTML = cart.map(p => `<div class="cart-row"><span>${p.name}</span><button type="button" onclick="removeItem('${p.cartId}')">Remove</button></div>`).join("");
-  selectedItems.value = cart.map(p => p.name).join(", ");
-  const sum = cart.reduce((s,p)=>s+(p.price||0),0);
-  total.textContent = sum ? `Estimated item total: ${money(sum)}` : "";
-}
-window.removeItem = id => { const i=cart.findIndex(x=>x.cartId===id); if(i>-1) cart.splice(i,1); renderCart(); };
-
-document.querySelector("#orderForm").addEventListener("submit", e => {
-  e.preventDefault();
-  document.querySelector("#success").hidden = false;
-});
-
-renderProducts();
-renderCart();
+const cart=[], grid=document.querySelector("#productGrid"), orderItems=document.querySelector("#orderItems"), selected=document.querySelector("#selectedItems"), total=document.querySelector("#total");
+const money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
+function products(){grid.innerHTML=PRODUCTS.map(p=>`<article class="card"><img src="${p.image}" alt="${p.name}"><div class="card-body"><h3>${p.name}</h3><p>${p.description}</p><b>${p.priceLabel||money(p.price)}</b><button class="pill navy add" data-id="${p.id}">Add to Order</button></div></article>`).join("");document.querySelectorAll(".add").forEach(b=>b.onclick=()=>{let p=PRODUCTS.find(x=>x.id===b.dataset.id);cart.push({...p,cartId:Date.now()+Math.random()});render();document.querySelector(".order").scrollIntoView({behavior:"smooth"})})}
+function render(){if(!cart.length){orderItems.innerHTML='<p class="muted">Nothing selected yet.</p>';selected.value="";total.textContent="";return}orderItems.innerHTML=cart.map(p=>`<div class="row"><span>${p.name}</span><button onclick="removeItem('${p.cartId}')">Remove</button></div>`).join("");selected.value=cart.map(p=>p.name).join(", ");let s=cart.reduce((a,p)=>a+(p.price||0),0);total.textContent=s?`Estimated item total: ${money(s)}`:""}
+window.removeItem=id=>{let i=cart.findIndex(x=>String(x.cartId)===String(id));if(i>=0)cart.splice(i,1);render()}
+document.querySelector("#orderForm").onsubmit=e=>{e.preventDefault();document.querySelector("#success").hidden=false}
+products();render();

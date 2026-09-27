@@ -1,29 +1,11 @@
-# ShonellesZEvents
+# ShonellesZEvents V2
+This version uses the real product photographs supplied by the owner and a tighter layout closer to the original Canva site.
 
-A simple, editable storefront for ShonellesZEvents.
+## Update instructions
+Upload all files and the `images` folder to the root of the existing GitHub repository, replacing the old `index.html`, `styles.css`, `app.js`, `products.js`, and README.
 
-## Easiest edits
-Open `products.js` in GitHub and click the pencil icon.
+## Easy product editing
+Edit `products.js` in GitHub. Product names, descriptions, prices and image paths are centralized there.
 
-Each product has:
-- `name`
-- `description`
-- `price`
-- `image`
-
-Put product photos in the `images` folder and set the image path, for example:
-`image: "images/beaded-pens.jpg"`
-
-## Important
-The order form currently demonstrates the customer workflow and success message, but it does **not** send email or collect payment yet. Those should be connected before replacing the current live site.
-
-## Free hosting
-This package is static and can be hosted on GitHub Pages or Cloudflare Pages.
-
-For Cloudflare Pages:
-- connect the GitHub repository
-- framework preset: None
-- build command: leave blank
-- output directory: `/`
-
-Do not point `shonellesezevents.com` to the replacement until you have tested and approved it.
+## Order form
+The cart/order-request interface works in the browser. Actual email delivery/payment is intentionally not connected yet; that is the next functional step after visual approval.
