@@ -21,7 +21,7 @@ button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{back
 </section>
 <section id="dashboard" hidden>
 <div class="panel"><strong id="who"></strong> <button class="secondary" id="signout">Sign out</button></div>
-<div class="panel"><h2>Products</h2><div id="rows"></div><p><button class="primary" id="save">Save all changes</button></p><p class="status" id="status"></p></div>
+<div class="panel"><h2>Products</h2><div id="rows"></div><p><button class="primary" id="save">Save all changes</button></p><p class="status" id="saveStatus"></p></div>
 <div class="panel"><h2>Orders</h2><p>Order management will activate when checkout is connected. Workflow: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed.</p></div>
 </section>
 </main>
@@ -29,6 +29,12 @@ button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{back
 <script src="site-config.js"></script>
 <script>
 const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
+const login=document.getElementById('login'), dashboard=document.getElementById('dashboard'),
+rows=document.getElementById('rows'), saveStatus=document.getElementById('saveStatus'),
+email=document.getElementById('email'), password=document.getElementById('password'),
+signin=document.getElementById('signin'), signout=document.getElementById('signout'),
+save=document.getElementById('save'), loginmsg=document.getElementById('loginmsg'),
+who=document.getElementById('who');
 let items=[];
 async function sessionUI(){
  const {data:{session}}=await db.auth.getSession();
@@ -36,10 +42,10 @@ async function sessionUI(){
  if(session){who.textContent="Signed in: "+session.user.email; await load();}
 }
 async function load(){
- status.textContent="Loading…";
+ saveStatus.textContent="Loading…";
  const {data,error}=await db.from('products').select('*').order('sort_order');
- if(error){status.textContent=error.message;return}
- items=data; draw(); status.textContent="";
+ if(error){saveStatus.textContent=error.message;return}
+ items=data; draw(); saveStatus.textContent="";
 }
 function esc(s){return String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
 function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
@@ -55,6 +61,6 @@ rows.addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;
 rows.addEventListener('change',e=>{if(e.target.dataset.k==='available')items[e.target.dataset.i].available=e.target.checked})
 signin.onclick=async()=>{loginmsg.textContent="Signing in…";const {error}=await db.auth.signInWithPassword({email:email.value,password:password.value});loginmsg.textContent=error?error.message:"";if(!error)sessionUI()}
 signout.onclick=async()=>{await db.auth.signOut();sessionUI()}
-save.onclick=async()=>{status.textContent="Saving…";for(const p of items){const {error}=await db.from('products').update({name:p.name,price:p.price,price_label:p.price_label,description:p.description,available:p.available,updated_at:new Date().toISOString()}).eq('id',p.id);if(error){status.textContent="Error: "+error.message;return}}status.textContent="Saved successfully."}
+save.onclick=async()=>{saveStatus.textContent="Saving…";for(const p of items){const {error}=await db.from('products').update({name:p.name,price:p.price,price_label:p.price_label,description:p.description,available:p.available,updated_at:new Date().toISOString()}).eq('id',p.id);if(error){saveStatus.textContent="Error: "+error.message;return}}saveStatus.textContent="Saved successfully."}
 sessionUI();
 </script></body></html>
