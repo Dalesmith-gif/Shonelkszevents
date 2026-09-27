@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ShonellesZEvents</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">HANDMADE • PERSONALIZED • JOYFUL</p>
+      <h1>ShonellesZEvents</h1>
+      <p class="lead">Personalized handcrafted beaded gifts made with personality. Choose a favorite, tell us your colors or theme, and we'll help create something special.</p>
+      <a class="btn" href="#shop">Browse beaded goodies</a>
+    </div>
+    <div class="hero-card"><div class="placeholder">Your featured product photo</div></div>
+  </header>
+
+  <main>
+    <section id="shop" class="shop">
+      <div class="section-head">
+        <div><p class="eyebrow">FIND YOUR FAVORITE</p><h2>Beaded things,<br>made joyful.</h2></div>
+        <p>Choose an item to begin your order.</p>
+      </div>
+      <div id="productGrid" class="product-grid"></div>
+    </section>
+
+    <section class="order">
+      <div>
+        <p class="eyebrow">YOUR HANDMADE ORDER</p>
+        <h2>Let's make something<br>just for you.</h2>
+        <div class="summary">
+          <h3>Order Summary</h3>
+          <div id="orderItems"><p class="muted">Nothing selected yet.</p></div>
+          <strong id="total"></strong>
+        </div>
+      </div>
+
+      <form id="orderForm" class="order-form">
+        <h3>Place an order request</h3>
+        <label>Name<input name="name" required></label>
+        <label>Email or phone<input name="contact" required></label>
+        <label>Selected items<textarea id="selectedItems" name="items" readonly></textarea></label>
+        <label>Customization requests<textarea name="customization" placeholder="Colors, names, theme, occasion..."></textarea></label>
+        <label>Pickup or delivery preference
+          <select name="fulfillment"><option>Pickup</option><option>Delivery</option><option>Not sure yet</option></select>
+        </label>
+        <label>Additional notes<textarea name="notes"></textarea></label>
+        <button class="submit" type="submit">Submit order request</button>
+        <p class="fine">Submitting an order request does not include payment. Pricing and next steps will be confirmed directly.</p>
+        <p id="success" class="success" hidden>Thank you! Your order request has been prepared.</p>
+      </form>
+    </section>
+
+    <section class="about">
+      <div class="about-image"><div class="placeholder">Your ShonellesZEvents photo</div></div>
+      <div>
+        <p class="eyebrow">ABOUT SHONELLESZEVENTS</p>
+        <h2>Handmade crafts<br>with personality.</h2>
+        <p>Every piece is created with care and can be personalized for your favorite colors, theme, name or special occasion.</p>
+        <div class="callout">Have a color palette, theme or special occasion in mind? Tell us about it in your order request.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="qr">QR</div>
+    <div><strong>Scan to visit our website</strong><br><span>shonellesezevents.com</span></div>
+  </footer>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
