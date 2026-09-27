@@ -5,3 +5,4 @@ function render(){if(!cart.length){orderItems.innerHTML='<p class="muted">Nothin
 window.removeItem=id=>{let i=cart.findIndex(x=>String(x.cartId)===String(id));if(i>=0)cart.splice(i,1);render()}
 document.querySelector("#orderForm").onsubmit=e=>{e.preventDefault();document.querySelector("#success").hidden=false}
 products();render();
+window.addEventListener('sez-products-loaded',()=>{ try{ if(typeof renderProducts==='function') renderProducts(); }catch(e){} });

@@ -1,19 +1,11 @@
-# ShonellesEZevents — Final Build Foundation
+# ShonellesEZevents Live Admin Build
+This version connects the storefront and Admin page to Supabase.
 
-Included:
-- Correct visible brand title: ShonellesEZevents
-- Responsive storefront and real product photos
-- Product selection/order summary
-- Admin page foundation (`admin.html`)
-- Order-status model: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed
-- Payment architecture for cards, Apple Pay, Google Pay, PayPal and Venmo
-- Safe configuration template; no secret payment/database credentials are stored in GitHub
+- admin.html: real Supabase email/password login
+- Products load from Supabase
+- Admin can edit product name, price, price label, description and availability
+- Public storefront uses only available products
+- Secret/service-role keys are not included
 
-## What still requires account activation
-A static ZIP cannot securely create external merchant/database accounts. To make Admin changes global and accept real money, connect:
-1. Supabase project (authentication, products, orders, storage)
-2. PayPal Business checkout (payment methods supported for the account/device/region)
-3. Transactional email provider or server function for merchant/customer confirmations
-4. Custom domain DNS
-
-Do not put private API keys, PayPal secrets, database passwords, or Supabase service-role keys in GitHub.
+Upload the CONTENTS of this folder to the existing GitHub repository root and commit.
+Then visit /admin.html on the deployed site and sign in with the Supabase Authentication user you created.

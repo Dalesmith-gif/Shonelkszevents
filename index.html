@@ -43,5 +43,19 @@
 </div></section>
 
 <footer><div class="wrap foot"><div class="qr">QR</div><div><b>Scan to visit our website</b><br>shonellesezevents.com</div></div></footer>
-<script src="products.js"></script><script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="site-config.js"></script>
+<script src="products.js"></script>
+<script>
+(async()=>{
+ try{
+  const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
+  const {data,error}=await db.from('products').select('*').eq('available',true).order('sort_order');
+  if(!error && data?.length){
+   window.PRODUCTS=data.map(p=>({id:p.id,name:p.name,eyebrow:p.eyebrow,description:p.description,price:Number(p.price),priceLabel:p.price_label,image:p.image}));
+   window.dispatchEvent(new Event('sez-products-loaded'));
+  }
+ }catch(e){ console.warn('Using local product fallback'); }
+})();
+</script><script src="app.js"></script>
 </body></html>

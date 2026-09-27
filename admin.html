@@ -2,40 +2,59 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ShonellesEZevents Admin</title>
-<link rel="stylesheet" href="styles.css">
+<title>ShonellesEZevents Admin</title><link rel="stylesheet" href="styles.css">
 <style>
-.admin{max-width:1000px;margin:40px auto;padding:20px}.admin h1{font-family:Georgia,serif;color:#8b2759}
-.notice{background:#fff4b8;padding:14px 16px;border-radius:12px;margin:15px 0}
-.row{display:grid;grid-template-columns:1fr 120px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #ddd}
-.row input{padding:10px;border:1px solid #bbb;border-radius:8px;width:100%}
-button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}
-.save{background:#8b2759;color:white}.reset{background:#eee}
-@media(max-width:700px){.row{grid-template-columns:1fr}}
+.admin{max-width:1100px;margin:35px auto;padding:20px}.admin h1{font-family:Georgia,serif;color:#8b2759}
+.panel{background:#fff;padding:20px;border-radius:16px;box-shadow:0 4px 18px #0001;margin:16px 0}
+.grid{display:grid;grid-template-columns:1fr 110px 1fr;gap:10px}.grid input,.login input{padding:11px;border:1px solid #bbb;border-radius:8px;width:100%;box-sizing:border-box}
+.row{padding:15px 0;border-bottom:1px solid #ddd}.row textarea{width:100%;min-height:60px;padding:10px;box-sizing:border-box}
+button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{background:#8b2759;color:#fff}.secondary{background:#eee}.status{font-weight:700;margin:10px 0}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
 </style></head>
-<body>
-<main class="admin">
+<body><main class="admin">
 <h1>ShonellesEZevents Admin</h1>
-<div class="notice"><strong>Admin foundation:</strong> product editing is ready. Secure cloud login/database activation requires your Supabase project credentials; payment activation requires your PayPal Business checkout credentials. Never paste private secret keys into this page or GitHub.</div>
-<h2>Products</h2><div id="rows"></div>
-<p><button class="save" id="save">Save changes on this browser</button> <button class="reset" id="reset">Reset</button></p>
-<h2>Order workflow</h2>
-<p>Planned statuses: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed.</p>
-<h2>Payments</h2>
-<p>Final checkout is designed for credit/debit cards, Apple Pay, Google Pay, PayPal and Venmo through a hosted payment checkout. Sensitive card data is never stored in this site.</p>
+<section id="login" class="panel login">
+<h2>Administrator Sign In</h2>
+<p><input id="email" type="email" placeholder="Admin email"></p>
+<p><input id="password" type="password" placeholder="Password"></p>
+<button class="primary" id="signin">Sign in</button><p id="loginmsg"></p>
+</section>
+<section id="dashboard" hidden>
+<div class="panel"><strong id="who"></strong> <button class="secondary" id="signout">Sign out</button></div>
+<div class="panel"><h2>Products</h2><div id="rows"></div><p><button class="primary" id="save">Save all changes</button></p><p class="status" id="status"></p></div>
+<div class="panel"><h2>Orders</h2><p>Order management will activate when checkout is connected. Workflow: New → Awaiting Payment → Paid → In Production → Ready → Shipped/Completed.</p></div>
+</section>
 </main>
-<script src="products.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="site-config.js"></script>
 <script>
-const KEY='sez-admin-products';
-let items=JSON.parse(localStorage.getItem(KEY)||'null')||window.PRODUCTS;
+const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
+let items=[];
+async function sessionUI(){
+ const {data:{session}}=await db.auth.getSession();
+ login.hidden=!!session; dashboard.hidden=!session;
+ if(session){who.textContent="Signed in: "+session.user.email; await load();}
+}
+async function load(){
+ status.textContent="Loading…";
+ const {data,error}=await db.from('products').select('*').order('sort_order');
+ if(error){status.textContent=error.message;return}
+ items=data; draw(); status.textContent="";
+}
+function esc(s){return String(s??'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')}
 function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
-<input data-i="${i}" data-k="name" value="${p.name}">
-<input data-i="${i}" data-k="price" type="number" value="${p.price}">
-<input data-i="${i}" data-k="priceLabel" value="${p.priceLabel||''}">
-<input data-i="${i}" data-k="description" value="${p.description||''}">
+<div class="grid">
+<input data-i="${i}" data-k="name" value="${esc(p.name)}" aria-label="Product name">
+<input data-i="${i}" data-k="price" type="number" step=".01" value="${p.price}" aria-label="Price">
+<input data-i="${i}" data-k="price_label" value="${esc(p.price_label)}" aria-label="Price label">
+</div>
+<p><textarea data-i="${i}" data-k="description" aria-label="Description">${esc(p.description)}</textarea></p>
+<label><input data-i="${i}" data-k="available" type="checkbox" ${p.available?'checked':''}> Available for sale</label>
 </div>`).join('')}
-rows.addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(k){items[i][k]=k==='price'?Number(e.target.value):e.target.value}})
-save.onclick=()=>{localStorage.setItem(KEY,JSON.stringify(items));alert('Saved on this browser. Supabase activation will make these changes live for all customers.')}
-reset.onclick=()=>{localStorage.removeItem(KEY);items=window.PRODUCTS;draw()}
-draw();
+rows.addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(k){items[i][k]=k==='price'?Number(e.target.value):k==='available'?e.target.checked:e.target.value}})
+rows.addEventListener('change',e=>{if(e.target.dataset.k==='available')items[e.target.dataset.i].available=e.target.checked})
+signin.onclick=async()=>{loginmsg.textContent="Signing in…";const {error}=await db.auth.signInWithPassword({email:email.value,password:password.value});loginmsg.textContent=error?error.message:"";if(!error)sessionUI()}
+signout.onclick=async()=>{await db.auth.signOut();sessionUI()}
+save.onclick=async()=>{status.textContent="Saving…";for(const p of items){const {error}=await db.from('products').update({name:p.name,price:p.price,price_label:p.price_label,description:p.description,available:p.available,updated_at:new Date().toISOString()}).eq('id',p.id);if(error){status.textContent="Error: "+error.message;return}}status.textContent="Saved successfully."}
+sessionUI();
 </script></body></html>
