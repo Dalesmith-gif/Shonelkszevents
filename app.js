@@ -54,21 +54,46 @@ async function initializeSquare(){
 form.onsubmit=async e=>{
  e.preventDefault(); success.hidden=false; success.textContent="Submitting your order…";
  if(!cart.length){success.textContent="Please add at least one item to your order.";return}
- const fd=new FormData(form), sum=cart.reduce((a,p)=>a+Number(p.price||0),0);
- const order={
+const fd=new FormData(form);
+
+const orderRequest={
   customer_name:String(fd.get("name")||"").trim(),
   contact:String(fd.get("contact")||"").trim(),
   customization:String(fd.get("customization")||"").trim(),
-  fulfillment:String(fd.get("fulfillment")||"Not sure yet"),
+  fulfillment:String(fd.get("fulfillment")||"Not sure yet").trim(),
   notes:String(fd.get("notes")||"").trim(),
-  estimated_total:sum
- };
- const {data:o,error}=await db.from("orders").insert(order).select("id,order_number").single();
- if(error){success.textContent="We couldn't submit the order. Please try again.";console.error(error);return}
- const items=cart.map(p=>({order_id:o.id,product_id:p.id,product_name:p.name,unit_price:Number(p.price||0),quantity:1}));
- const {error:itemErr}=await db.from("order_items").insert(items);
- if(itemErr){success.textContent=`Order ${o.order_number} was created, but item details need attention. Please contact us.`;console.error(itemErr);return}
-currentOrderId=o.id;
+  items:cart.map(p=>({
+    product_id:p.id,
+    quantity:1
+  }))
+};
+
+let response;
+
+try{
+  response=await fetch(
+    "https://izfnihecnckzsxbukpvb.supabase.co/functions/v1/create-order",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(orderRequest)
+    }
+  );
+}catch(err){
+  console.error(err);
+  success.textContent="We couldn't submit the order. Please try again.";
+  return;
+}
+
+const o=await response.json();
+
+if(!response.ok || !o.success){
+  console.error(o);
+  success.textContent=o.error || "We couldn't submit the order. Please try again.";
+  return;
+}currentOrderId=o.order_id;
 
 success.innerHTML=`Order <strong>${o.order_number}</strong> has been created. Complete your payment securely below.`;
 
