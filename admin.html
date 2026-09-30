@@ -74,7 +74,7 @@ async function loadOrders(){
  ${o.customer_name} · ${o.contact}<br>
  Items: ${(o.order_items||[]).map(i=>i.product_name).join(", ")}<br>
  Estimated total: $${Number(o.estimated_total).toFixed(2)}<br>
- Payment: <strong>${esc(o.payment_status || "Not started")}</strong><br>
+<strong>Payment: ${esc(o.payment_status || "Not started")}</strong><br>
  Customization: ${o.customization||"—"}<br>
  Fulfillment: ${o.fulfillment||"—"}<br>
  <label>Status <select class="orderStatus" data-id="${o.id}">
