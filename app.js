@@ -4,7 +4,12 @@ selected=document.querySelector("#selectedItems"), total=document.querySelector(
 form=document.querySelector("#orderForm"), success=document.querySelector("#success");
 const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
 const money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
+const SQUARE_APP_ID="sandbox-sq0idb-qzmXY_SqjutoZ1E2heHZNg";
+const SQUARE_LOCATION_ID="LHCZ68PS165GM";
+const SQUARE_PAYMENT_URL="https://izfnihecnckzsxbukpvb.supabase.co/functions/v1/square-create-payment";
 
+let squareCard=null;
+let currentOrderId=null;
 function renderProducts(){
  grid.innerHTML=window.PRODUCTS.map(p=>`<article class="card"><img src="${p.image}" alt="${p.name}">
  <div class="card-body"><span class="eyebrow">${p.eyebrow||""}</span><h3>${p.name}</h3>
@@ -35,7 +40,17 @@ async function loadProducts(){
  }catch(e){console.warn("Using local product fallback",e)}
  renderProducts(); renderCart();
 }
+async function initializeSquare(){
+  if(!window.Square) throw new Error("Square payment library did not load.");
 
+  const payments=window.Square.payments(
+    SQUARE_APP_ID,
+    SQUARE_LOCATION_ID
+  );
+
+  squareCard=await payments.card();
+  await squareCard.attach("#card-container");
+}
 form.onsubmit=async e=>{
  e.preventDefault(); success.hidden=false; success.textContent="Submitting your order…";
  if(!cart.length){success.textContent="Please add at least one item to your order.";return}
@@ -53,7 +68,66 @@ form.onsubmit=async e=>{
  const items=cart.map(p=>({order_id:o.id,product_id:p.id,product_name:p.name,unit_price:Number(p.price||0),quantity:1}));
  const {error:itemErr}=await db.from("order_items").insert(items);
  if(itemErr){success.textContent=`Order ${o.order_number} was created, but item details need attention. Please contact us.`;console.error(itemErr);return}
- success.innerHTML=`Thank you! <strong>${o.order_number}</strong> has been received. We will confirm customization, final pricing and payment next.`;
- form.reset(); cart.splice(0); renderCart();
+currentOrderId=o.id;
+
+success.innerHTML=`Order <strong>${o.order_number}</strong> has been created. Complete your payment securely below.`;
+
+const paymentSection=document.querySelector("#payment-section");
+paymentSection.hidden=false;
+
+try{
+  if(!squareCard) await initializeSquare();
+}catch(err){
+  console.error(err);
+  document.querySelector("#payment-status").textContent="The payment form could not be loaded. Please refresh and try again.";
+}
+}; document.querySelector("#card-button").onclick=async()=>{
+  const status=document.querySelector("#payment-status");
+  const button=document.querySelector("#card-button");
+
+  if(!squareCard || !currentOrderId){
+    status.textContent="Payment is not ready yet.";
+    return;
+  }
+
+  button.disabled=true;
+  status.textContent="Processing payment...";
+
+  try{
+    const tokenResult=await squareCard.tokenize();
+
+    if(tokenResult.status!=="OK"){
+      throw new Error("Card information could not be verified.");
+    }
+
+    const response=await fetch(SQUARE_PAYMENT_URL,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        order_id:currentOrderId,
+        source_id:tokenResult.token
+      })
+    });
+
+    const result=await response.json();
+
+    if(!response.ok || !result.success){
+      throw new Error(result.error || "Payment could not be completed.");
+    }
+
+    status.textContent="Payment successful. Thank you!";
+
+    form.reset();
+    cart.splice(0);
+    renderCart();
+
+    document.querySelector("#card-button").hidden=true;
+  }catch(err){
+    console.error(err);
+    status.textContent=err.message || "Payment failed. Please try again.";
+    button.disabled=false;
+  }
 };
 loadProducts();
