@@ -32,6 +32,13 @@
     <button class="submit" type="submit">Submit order request</button>
     <p class="fine">Your order request will be securely recorded. Final customization and payment will be confirmed before production.</p>
     <p id="success" class="success" hidden>Submitting your order…</p>
+    <div id="payment-section" hidden>
+  <h3>Pay securely with Square</h3>
+  <p>Your order has been created. Enter your card information below to complete payment.</p>
+  <div id="card-container"></div>
+  <button id="card-button" type="button">Pay Now</button>
+  <p id="payment-status" class="success"></p>
+</div>
   </form>
 </div></section>
 
@@ -46,5 +53,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="site-config.js"></script>
 <script src="products.js"></script>
+<script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
 <script src="app.js"></script>
 </body></html>
