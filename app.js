@@ -4,8 +4,8 @@ selected=document.querySelector("#selectedItems"), total=document.querySelector(
 form=document.querySelector("#orderForm"), success=document.querySelector("#success");
 const db=window.supabase.createClient(SEZ_CONFIG.supabaseUrl,SEZ_CONFIG.supabaseAnonKey);
 const money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(n);
-const SQUARE_APP_ID="sq0idp-rpXZE-P7jlavWmGbxDWsZA";
-const SQUARE_LOCATION_ID="L7NRPYP94ZSI6";
+const SQUARE_APP_ID="sq0idp-rpXZE-P7jIavWmGbxDWsZA";
+const SQUARE_LOCATION_ID="L7NRPYP94ZS16";
 const SQUARE_PAYMENT_URL="https://izfnihecnckzsxbukpvb.supabase.co/functions/v1/square-create-payment-production";
 
 let squareCard=null;
