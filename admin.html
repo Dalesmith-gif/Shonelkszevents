@@ -169,7 +169,8 @@ createProduct.onclick=async()=>{
     ? Math.max(...items.map(p=>Number(p.sort_order)||0))+1
     : 1;
 
-  const {error}=await db.from('products').insert({
+const {error}=await db.from('products').insert({
+    id: crypto.randomUUID(),
     name:name,
     price:price,
     price_label:priceLabel,
