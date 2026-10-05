@@ -21,7 +21,44 @@ button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{back
 </section>
 <section id="dashboard" hidden>
 <div class="panel"><strong id="who"></strong> <button class="secondary" id="signout">Sign out</button></div>
-<div class="panel"><h2>Products</h2><div id="rows"></div><p><button class="primary" id="save">Save all changes</button></p><p class="status" id="saveStatus"></p></div>
+<div class="panel">
+<h2>Products</h2>
+
+<div id="rows"></div>
+
+<p>
+<button class="primary" id="save">Save all changes</button>
+<button class="secondary" id="showAddProduct">+ Add New Product</button>
+</p>
+
+<p class="status" id="saveStatus"></p>
+
+<div id="addProductPanel" class="row" hidden>
+<h3>Add New Product</h3>
+
+<div class="grid">
+<input id="newName" placeholder="Product name">
+<input id="newPrice" type="number" step=".01" min="0" placeholder="Base price">
+<input id="newPriceLabel" placeholder="Price wording, e.g. Designs $15">
+</div>
+
+<p>
+<textarea id="newDescription" placeholder="Product description"></textarea>
+</p>
+
+<label>
+<input id="newAvailable" type="checkbox" checked>
+Available for sale
+</label>
+
+<p>
+<button class="primary" id="createProduct">Add Product</button>
+<button class="secondary" id="cancelAddProduct">Cancel</button>
+</p>
+
+<p class="status" id="addProductStatus"></p>
+</div>
+</div>
 <div class="panel"><h2>Orders</h2><button class="secondary" id="refreshOrders">Refresh orders</button><div id="orders"></div></div>
 </section>
 </main>
@@ -87,6 +124,81 @@ async function loadOrders(){
  });
 }
 refreshOrders.onclick=loadOrders;
+const showAddProduct=document.getElementById('showAddProduct');
+const addProductPanel=document.getElementById('addProductPanel');
+const cancelAddProduct=document.getElementById('cancelAddProduct');
+const createProduct=document.getElementById('createProduct');
+const newName=document.getElementById('newName');
+const newPrice=document.getElementById('newPrice');
+const newPriceLabel=document.getElementById('newPriceLabel');
+const newDescription=document.getElementById('newDescription');
+const newAvailable=document.getElementById('newAvailable');
+const addProductStatus=document.getElementById('addProductStatus');
 
+showAddProduct.onclick=()=>{
+  addProductPanel.hidden=false;
+  addProductStatus.textContent="";
+  newName.focus();
+};
+
+cancelAddProduct.onclick=()=>{
+  addProductPanel.hidden=true;
+  addProductStatus.textContent="";
+};
+
+createProduct.onclick=async()=>{
+  const name=newName.value.trim();
+  const price=Number(newPrice.value);
+  const priceLabel=newPriceLabel.value.trim();
+  const description=newDescription.value.trim();
+
+  if(!name){
+    addProductStatus.textContent="Please enter a product name.";
+    return;
+  }
+
+  if(newPrice.value==="" || !Number.isFinite(price) || price < 0){
+    addProductStatus.textContent="Please enter a valid price.";
+    return;
+  }
+
+  createProduct.disabled=true;
+  addProductStatus.textContent="Adding product…";
+
+  const nextSort=items.length
+    ? Math.max(...items.map(p=>Number(p.sort_order)||0))+1
+    : 1;
+
+  const {error}=await db.from('products').insert({
+    name:name,
+    price:price,
+    price_label:priceLabel,
+    description:description,
+    available:newAvailable.checked,
+    sort_order:nextSort
+  });
+
+  createProduct.disabled=false;
+
+  if(error){
+    addProductStatus.textContent="Error: "+error.message;
+    return;
+  }
+
+  addProductStatus.textContent="Product added successfully.";
+
+  newName.value="";
+  newPrice.value="";
+  newPriceLabel.value="";
+  newDescription.value="";
+  newAvailable.checked=true;
+
+  await load();
+
+  setTimeout(()=>{
+    addProductPanel.hidden=true;
+    addProductStatus.textContent="";
+  },1200);
+};
 sessionUI();
 </script></body></html>
