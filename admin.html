@@ -145,8 +145,9 @@ rows.addEventListener('click', async e => {
 
   const i = Number(e.target.dataset.i);
   const product = items[i];
-  const fileInput = rows.querySelector(`.productImageFile[data-i="${i}"]`);
-  const statusEl = rows.querySelector(`.imageUploadStatus[data-i="${i}"]`);
+  const productRow = e.target.closest('.row');
+  const fileInput = productRow.querySelector('.productImageFile');
+  const statusEl = productRow.querySelector('.imageUploadStatus');
   const file = fileInput.files[0];
 
   if (!file) {
