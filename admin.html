@@ -97,7 +97,11 @@ function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
 </div>
 <p><textarea data-i="${i}" data-k="description" aria-label="Description">${esc(p.description)}</textarea></p>
 <label><input data-i="${i}" data-k="available" type="checkbox" ${p.available?'checked':''}> Available for sale</label>
-
+<p>
+<button type="button" class="secondary archiveProduct" data-i="${i}">
+Archive Product
+</button>
+</p>
 <p>
 <strong>Product image:</strong><br>
 ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;margin:8px 0">` : `<span>No image uploaded</span>`}
@@ -140,8 +144,43 @@ async function loadOrders(){
  });
 }
 refreshOrders.onclick=loadOrders;
-rows.addEventListener('click', async e => {
-  if (!e.target.classList.contains('uploadProductImage')) return;
+ rows.addEventListener('click', async e => {
+  if (!e.target.classList.contains('archiveProduct')) return;
+
+  const i = Number(e.target.dataset.i);
+  const product = items[i];
+
+  const confirmed = confirm(
+    `Archive "${product.name}"?\n\nThis will remove it from the storefront but keep the product record and order history.`
+  );
+
+  if (!confirmed) return;
+
+  e.target.disabled = true;
+  e.target.textContent = "Archiving…";
+
+  const { error } = await db
+    .from('products')
+    .update({
+      available: false,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', product.id);
+
+  if (error) {
+    alert("Archive failed: " + error.message);
+    e.target.disabled = false;
+    e.target.textContent = "Archive Product";
+    return;
+  }
+
+  product.available = false;
+  draw();
+
+  alert(`"${product.name}" has been archived.`);
+});
+ rows.addEventListener('click', async e => { 
+ if (!e.target.classList.contains('uploadProductImage')) return;
 
   const i = Number(e.target.dataset.i);
   const product = items[i];
