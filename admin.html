@@ -101,10 +101,10 @@ function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
 <button type="button" class="secondary archiveProduct" data-i="${i}">
 Archive Product
 </button>
-</p>
-<p>
-<strong>Product image:</strong><br>
-${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;margin:8px 0">` : `<span>No image uploaded</span>`}
+
+<button type="button" class="secondary deleteProduct" data-i="${i}">
+Delete Permanently
+</button>
 </p>
 
 <p>
@@ -178,6 +178,47 @@ refreshOrders.onclick=loadOrders;
   draw();
 
   alert(`"${product.name}" has been archived.`);
+});
+ rows.addEventListener('click', async e => {
+  if (!e.target.classList.contains('deleteProduct')) return;
+
+  const i = Number(e.target.dataset.i);
+  const product = items[i];
+
+  const confirmed = confirm(
+    `PERMANENTLY DELETE "${product.name}"?\n\nThis cannot be undone. Use Archive instead if you may need this product later.`
+  );
+
+  if (!confirmed) return;
+
+  const typedName = prompt(
+    `For safety, type the product name exactly as shown:\n\n${product.name}`
+  );
+
+  if (typedName !== product.name) {
+    alert("Product name did not match. Nothing was deleted.");
+    return;
+  }
+
+  e.target.disabled = true;
+  e.target.textContent = "Deleting…";
+
+  const { error } = await db
+    .from('products')
+    .delete()
+    .eq('id', product.id);
+
+  if (error) {
+    alert("Delete failed: " + error.message);
+    e.target.disabled = false;
+    e.target.textContent = "Delete Permanently";
+    return;
+  }
+
+  items.splice(i, 1);
+  draw();
+
+  alert(`"${product.name}" was permanently deleted.`);
 });
  rows.addEventListener('click', async e => { 
  if (!e.target.classList.contains('uploadProductImage')) return;
