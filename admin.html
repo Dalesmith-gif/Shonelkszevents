@@ -45,7 +45,10 @@ button{padding:10px 14px;border:0;border-radius:9px;cursor:pointer}.primary{back
 <p>
 <textarea id="newDescription" placeholder="Product description"></textarea>
 </p>
-
+<p>
+<label><strong>Product image</strong></label><br>
+<input id="newImage" type="file" accept="image/jpeg,image/png,image/webp">
+</p>
 <label>
 <input id="newAvailable" type="checkbox" checked>
 Available for sale
@@ -94,6 +97,19 @@ function draw(){rows.innerHTML=items.map((p,i)=>`<div class="row">
 </div>
 <p><textarea data-i="${i}" data-k="description" aria-label="Description">${esc(p.description)}</textarea></p>
 <label><input data-i="${i}" data-k="available" type="checkbox" ${p.available?'checked':''}> Available for sale</label>
+
+<p>
+<strong>Product image:</strong><br>
+${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" style="width:100px;height:100px;object-fit:cover;border-radius:10px;margin:8px 0">` : `<span>No image uploaded</span>`}
+</p>
+
+<p>
+<input type="file" class="productImageFile" data-i="${i}" accept="image/jpeg,image/png,image/webp">
+<button type="button" class="secondary uploadProductImage" data-i="${i}">Upload / Change Image</button>
+<span class="imageUploadStatus" data-i="${i}"></span>
+</p>
+
+</div>
 </div>`).join('')}
 rows.addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(k){items[i][k]=k==='price'?Number(e.target.value):k==='available'?e.target.checked:e.target.value}})
 rows.addEventListener('change',e=>{if(e.target.dataset.k==='available')items[e.target.dataset.i].available=e.target.checked})
@@ -124,6 +140,76 @@ async function loadOrders(){
  });
 }
 refreshOrders.onclick=loadOrders;
+rows.addEventListener('click', async e => {
+  if (!e.target.classList.contains('uploadProductImage')) return;
+
+  const i = Number(e.target.dataset.i);
+  const product = items[i];
+  const fileInput = rows.querySelector(`.productImageFile[data-i="${i}"]`);
+  const statusEl = rows.querySelector(`.imageUploadStatus[data-i="${i}"]`);
+  const file = fileInput.files[0];
+
+  if (!file) {
+    statusEl.textContent = " Please choose an image first.";
+    return;
+  }
+
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+    statusEl.textContent = " Please choose a JPG, PNG, or WebP image.";
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    statusEl.textContent = " Image must be 5 MB or smaller.";
+    return;
+  }
+
+  e.target.disabled = true;
+  statusEl.textContent = " Uploading…";
+
+  const extension = file.name.split('.').pop().toLowerCase();
+  const safeId = String(product.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filePath = `${safeId}-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await db.storage
+    .from('product-images')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type
+    });
+
+  if (uploadError) {
+    e.target.disabled = false;
+    statusEl.textContent = " Upload error: " + uploadError.message;
+    return;
+  }
+
+  const { data: publicData } = db.storage
+    .from('product-images')
+    .getPublicUrl(filePath);
+
+  const imageUrl = publicData.publicUrl;
+
+  const { error: updateError } = await db
+    .from('products')
+    .update({
+      image: imageUrl,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', product.id);
+
+  e.target.disabled = false;
+
+  if (updateError) {
+    statusEl.textContent = " Database error: " + updateError.message;
+    return;
+  }
+
+product.image = imageUrl;
+statusEl.textContent = " Image uploaded successfully.";
+setTimeout(() => draw(), 1000);
+}); 
 const showAddProduct=document.getElementById('showAddProduct');
 const addProductPanel=document.getElementById('addProductPanel');
 const cancelAddProduct=document.getElementById('cancelAddProduct');
@@ -132,6 +218,7 @@ const newName=document.getElementById('newName');
 const newPrice=document.getElementById('newPrice');
 const newPriceLabel=document.getElementById('newPriceLabel');
 const newDescription=document.getElementById('newDescription');
+const newImage=document.getElementById('newImage');
 const newAvailable=document.getElementById('newAvailable');
 const addProductStatus=document.getElementById('addProductStatus');
 
@@ -151,6 +238,17 @@ createProduct.onclick=async()=>{
   const price=Number(newPrice.value);
   const priceLabel=newPriceLabel.value.trim();
   const description=newDescription.value.trim();
+ const imageFile=newImage.files[0];
+
+if(imageFile && !['image/jpeg','image/png','image/webp'].includes(imageFile.type)){
+  addProductStatus.textContent="Please choose a JPG, PNG, or WebP image.";
+  return;
+}
+
+if(imageFile && imageFile.size > 5 * 1024 * 1024){
+  addProductStatus.textContent="Image must be 5 MB or smaller.";
+  return;
+}
 
   if(!name){
     addProductStatus.textContent="Please enter a product name.";
@@ -168,13 +266,44 @@ createProduct.onclick=async()=>{
   const nextSort=items.length
     ? Math.max(...items.map(p=>Number(p.sort_order)||0))+1
     : 1;
+const newProductId=crypto.randomUUID();
+let imageUrl = "";
 
+if(imageFile){
+  addProductStatus.textContent="Uploading image…";
+
+  const extension=imageFile.name.split('.').pop().toLowerCase();
+ 
+  const filePath=`${newProductId}-${Date.now()}.${extension}`;
+
+  const {error:uploadError}=await db.storage
+    .from('product-images')
+    .upload(filePath,imageFile,{
+      cacheControl:'3600',
+      upsert:false,
+      contentType:imageFile.type
+    });
+
+  if(uploadError){
+    createProduct.disabled=false;
+    addProductStatus.textContent="Image upload error: "+uploadError.message;
+    return;
+  }
+
+  const {data:publicData}=db.storage
+    .from('product-images')
+    .getPublicUrl(filePath);
+
+  imageUrl=publicData.publicUrl;
+}
 const {error}=await db.from('products').insert({
     id: crypto.randomUUID(),
+    id: newProductId,
     name:name,
     price:price,
     price_label:priceLabel,
     description:description,
+    image:imageUrl,
     available:newAvailable.checked,
     sort_order:nextSort
   });
@@ -192,6 +321,7 @@ const {error}=await db.from('products').insert({
   newPrice.value="";
   newPriceLabel.value="";
   newDescription.value="";
+  newImage.value="";
   newAvailable.checked=true;
 
   await load();
